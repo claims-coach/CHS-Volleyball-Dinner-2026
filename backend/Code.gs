@@ -163,6 +163,7 @@ function sendConfirmationEmails_(name, volunteerEmail, dateId, phone, notes) {
     <p>Email: ${safe_(volunteerEmail)}</p>
     ${phone ? `<p>Phone: ${safe_(phone)}</p>` : ''}
     ${notes ? `<p>Notes: ${safe_(notes)}</p>` : ''}
+    <p><b>Food quantity:</b> Please bring enough dinner/snacks for <b>about 15 people</b> (players + coaches).</p>
     <p><b>Note on drinks:</b> Drinks are <i>not required</i>. If you choose to bring them, 
     please stick to <b>water or sports drinks</b> — <b>no energy drinks or caffeinated beverages</b>.</p>
     <p>Go Bruins!</p>`;
