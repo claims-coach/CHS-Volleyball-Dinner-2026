@@ -42,8 +42,65 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
   
-  return ContentService.createTextOutput(JSON.stringify({ok:true, hint:'Use ?action=list'}))
+  if (action === 'signup' || action === 'reserve') {
+    return handleSignup_(params);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ok:true, hint:'Use ?action=list or ?action=signup'}))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleSignup_(params) {
+  try {
+    const id = params.id || '';
+    const name = params.name || '';
+    const email = params.email || '';
+    const phone = params.phone || '';
+    const notes = params.notes || '';
+    const label = params.label || id;
+    
+    if (!id || !name || !email) throw new Error('Missing required fields');
+
+    const lock = LockService.getScriptLock();
+    lock.tryLock(30000);
+
+    const sh = getSheet_();
+    const data = sh.getDataRange().getValues();
+    
+    for (let i=1; i<data.length; i++) {
+      if (data[i][0] === id) {
+        lock.releaseLock();
+        return json_({ ok:false, error:'That date is already taken.' });
+      }
+    }
+    
+    sh.appendRow([id, label, name, email, phone, notes, new Date(), 'webapp']);
+
+    try {
+      const subject = `Cascade Bruins Volleyball: ${name} confirmed for ${id}`;
+      const html = `
+        <p>Thanks, ${safe_(name)} — you're confirmed for <b>${safe_(id)}</b>.</p>
+        <p>Email: ${safe_(email)}</p>
+        ${phone ? `<p>Phone: ${safe_(phone)}</p>` : ''}
+        ${notes ? `<p>Notes: ${safe_(notes)}</p>` : ''}
+        <p><b>Note on drinks:</b> Drinks are <i>not required</i>. If you choose to bring them, 
+        please stick to <b>water or sports drinks</b> — <b>no energy drinks or caffeinated beverages</b>.</p>
+        <p>Go Bruins!</p>`;
+      
+      const recipients = [email, COACH_EMAIL, ORGANIZER_EMAIL].filter(Boolean).join(',');
+      MailApp.sendEmail({ to: recipients, subject, htmlBody: html });
+    } catch(errMail) {
+      console.error('Email error:', errMail);
+    }
+
+    lock.releaseLock();
+    return json_({ ok:true });
+    
+  } catch (err) {
+    console.error('handleSignup_ error:', err);
+    try { LockService.getScriptLock().releaseLock(); } catch(_){ }
+    return json_({ ok:false, error: String(err) });
+  }
 }
 
 function doPost(e) {
