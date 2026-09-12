@@ -177,6 +177,7 @@
               phone=document.getElementById('phone').value.trim(),
               notes=document.getElementById('notes').value.trim();
         if(!id||!name||!email){$msg.textContent='Fill all required fields';return;}
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$msg.textContent='Please enter a valid email address';$msg.className='help err';return;}
         const btn=$form.querySelector('button[type=submit]');btn.disabled=true;
         try{const res=await submitSignup({id,label:LABELS[id]||id,name,email,phone,notes});
           if(res&&res.ok){$msg.textContent='Saved! Confirmation email sent.';$msg.className='help ok';
