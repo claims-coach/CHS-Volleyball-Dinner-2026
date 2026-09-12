@@ -50,6 +50,7 @@ function doPost(e) {
   try {
     const body = (e && e.postData && e.postData.contents) ? JSON.parse(e.postData.contents) : {};
     const { id, name, email, phone, notes } = body;
+    const label = body.label || id;
     
     if (!id || !name || !email) throw new Error('Missing required fields');
 
@@ -67,7 +68,7 @@ function doPost(e) {
       }
     }
     
-    sh.appendRow([id, id, name, email, phone || '', notes || '', new Date(), 'webapp']);
+    sh.appendRow([id, label, name, email, phone || '', notes || '', new Date(), 'webapp']);
 
     // Send confirmation emails
     try {
