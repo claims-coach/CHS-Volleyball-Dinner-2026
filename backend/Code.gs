@@ -8,9 +8,8 @@
 
 const SHEET_NAME = 'Signups';
 
-// TODO: Set these to actual email addresses before deploying
-const ORGANIZER_EMAIL = 'organizer@example.com'; // TODO: Replace with organizer email
-const COACH_EMAIL = 'coach@example.com';         // TODO: Replace with coach email
+const ORGANIZER_EMAIL = 'walker.alli@gmail.com';
+const COACH_EMAIL = 'NArevalo@everettsd.org';
 
 function getSheet_() {
   const ss = SpreadsheetApp.getActive();
