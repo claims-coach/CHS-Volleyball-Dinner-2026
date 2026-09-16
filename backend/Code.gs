@@ -2,7 +2,7 @@
  * Cascade Bruins Volleyball — Dinner Sign-Up Backend (Google Apps Script)
  * 2026-27 Season
  *
- * Stores signups in a Google Sheet; enforces SLOTS_PER_DATE per home game;
+ * Stores signups in a Google Sheet; enforces SLOTS_PER_DATE per date (home dinner or away snacks);
  * emails volunteer, coach, and organizers on confirmation.
  *
  * NOTE: Browser clients must use GET ?action=signup (POST to /exec 302→405).
@@ -102,6 +102,8 @@ function sendConfirmations_(payload) {
   const notes = payload.notes || '';
 
   const subject = 'Cascade Bruins Volleyball: ' + name + ' confirmed for ' + label;
+  const isAway = /AWAY|Snacks/i.test(label);
+  const foodWord = isAway ? 'snacks' : 'dinner';
   const html = '' +
     '<p>Thanks, ' + safe_(name) + " — you're confirmed for <b>" + safe_(label) + '</b>.</p>' +
     '<p>Email: ' + safe_(volunteerEmail) + '</p>' +
@@ -109,7 +111,7 @@ function sendConfirmations_(payload) {
     (notes ? ('<p>Notes: ' + safe_(notes) + '</p>') : '') +
     '<p><b>Note on drinks:</b> Drinks are <i>not required</i>. If you choose to bring them, ' +
     'please stick to <b>water or sports drinks</b> — <b>no energy drinks or caffeinated beverages</b>.</p>' +
-    '<p><b>Food quantity:</b> Please bring enough dinner/snacks for about 15 people.</p>' +
+    '<p><b>Food quantity:</b> Please bring enough ' + foodWord + ' for about 15 people.</p>' +
     '<p>Go Bruins!</p>';
 
   const recipients = [];

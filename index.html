@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cascade Bruins Volleyball — Dinner Sign-Up (2026-27)</title>
+  <title>Cascade Bruins Volleyball — Dinner &amp; Snacks Sign-Up (2026-27)</title>
   <style>
     :root {
       --crimson:#7a1f2a; --crimson-2:#a2313e; --gray:#6b7280;
@@ -53,9 +53,9 @@
   <header>
     <div class="brand">
       <div class="crest"><img src="./assets/chs-logo.jpeg" alt="Cascade Bruins logo"></div>
-      <h1>Cascade Bruins Volleyball — Dinner Sign-Up</h1>
+      <h1>Cascade Bruins Volleyball — Dinner &amp; Snacks</h1>
     </div>
-    <p class="sub">2026-27 Season • One volunteer per date brings dinner/snacks <b>for about 15 people</b>.</p>
+    <p class="sub">2026-27 Season • Up to <b>2 volunteers</b> per date. Home games = dinner; away games = snacks. Bring enough <b>for about 15 people</b>.</p>
   </header>
 
   <!-- Drinks reminder -->
@@ -63,11 +63,11 @@
     <div><strong>Note on drinks:</strong> Drinks are <em>not required</em>. If you do bring them,
       please stick to <strong>water or sports drinks</strong> — <strong>no energy drinks or caffeinated beverages</strong>.</div>
   </div>
-  <div class="banner"><div><strong>Food quantity:</strong> Please bring enough dinner/snacks <b>for about 15 people</b>.</div></div>
+  <div class="banner"><div><strong>Home dinners / Away snacks:</strong> Home games need dinner; away games need snacks (chips, fruit, bars, etc.). Enough for about <b>15 people</b>. Up to <b>2 signups</b> per date.</div></div>
 
   <main>
     <section class="card">
-      <h2>Open Dates</h2>
+      <h2>Open Dates (Dinner + Away Snacks)</h2>
       <div class="list" id="dates"></div>
     </section>
 
@@ -105,15 +105,27 @@
     // === Your Apps Script Web App URL ===
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxSVZCxsIQVd9-oZeISl7CPlgZiefI3rR11leghXHMkowD1lq5K7z0u4Kdpv8YziHDk6Q/exec";
 
-    // 2026-27 HOME games only (MaxPreps Cascade Everett WA)
+    // 2026-27 schedule (MaxPreps Cascade Everett WA, updated Sep 16 2026)
+    // kind: home = dinner, away = snacks. Up to CAPACITY volunteers per date.
     const GAMES = [
-      { id:"2026-09-15", label:"Tue Sept 15 — HOME vs Shorecrest" },
-      { id:"2026-09-16", label:"Wed Sept 16 — HOME vs Marysville Getchell" },
-      { id:"2026-10-08", label:"Thu Oct 8 — HOME vs Snohomish" },
-      { id:"2026-10-13", label:"Tue Oct 13 — HOME vs Stanwood" },
-      { id:"2026-10-19", label:"Mon Oct 19 — HOME vs Monroe" },
-      { id:"2026-10-21", label:"Wed Oct 21 — HOME vs Marysville-Pilchuck" },
-      { id:"2026-10-27", label:"Tue Oct 27 — HOME vs Everett" }
+      { id:"2026-09-15", kind:"home", label:"Tue Sept 15 — Dinner HOME vs Shorecrest" },
+      { id:"2026-09-16", kind:"home", label:"Wed Sept 16 — Dinner HOME vs Marysville Getchell" },
+      { id:"2026-09-21", kind:"away", label:"Mon Sept 21 — Snacks AWAY @ Mountlake Terrace" },
+      { id:"2026-09-22", kind:"away", label:"Tue Sept 22 — Snacks AWAY @ Arlington" },
+      { id:"2026-09-23", kind:"away", label:"Wed Sept 23 — Snacks AWAY @ Arlington" },
+      { id:"2026-09-24", kind:"home", label:"Thu Sept 24 — Dinner HOME vs Monroe" },
+      { id:"2026-09-28", kind:"away", label:"Mon Sept 28 — Snacks AWAY @ Marysville-Pilchuck" },
+      { id:"2026-09-30", kind:"away", label:"Wed Sept 30 — Snacks AWAY @ Everett" },
+      { id:"2026-10-06", kind:"away", label:"Tue Oct 6 — Snacks AWAY @ Marysville Getchell" },
+      { id:"2026-10-08", kind:"home", label:"Thu Oct 8 — Dinner HOME vs Snohomish" },
+      { id:"2026-10-13", kind:"home", label:"Tue Oct 13 — Dinner HOME vs Stanwood" },
+      { id:"2026-10-15", kind:"away", label:"Thu Oct 15 — Snacks AWAY @ Mariner" },
+      { id:"2026-10-19", kind:"home", label:"Mon Oct 19 — Dinner HOME vs Monroe" },
+      { id:"2026-10-21", kind:"home", label:"Wed Oct 21 — Dinner HOME vs Marysville-Pilchuck" },
+      { id:"2026-10-27", kind:"home", label:"Tue Oct 27 — Dinner HOME vs Everett" },
+      { id:"2026-10-29", kind:"away", label:"Thu Oct 29 — Snacks AWAY @ Snohomish" },
+      { id:"2026-11-03-snohomish", kind:"away", label:"Tue Nov 3 — Snacks AWAY @ Snohomish" },
+      { id:"2026-11-03-stanwood", kind:"away", label:"Tue Nov 3 — Snacks AWAY @ Stanwood" }
     ];
     const LABELS = Object.fromEntries(GAMES.map(g => [g.id, g.label]));
 
@@ -138,7 +150,7 @@
       const left=document.createElement('div');left.className='meta';
       const when=document.createElement('div');when.className='when';when.textContent=game.label;
       const who=document.createElement('div');who.className='who help';
-      if(!filled){who.textContent='Open — '+CAPACITY+' slots';}
+      if(!filled){who.textContent='Open — '+CAPACITY+' slots ('+(game.kind==='away'?'snacks':'dinner')+')';}
       else{
         const lines=slots.map(s=>{
           const contact=[s.email||'',s.phone?`(${s.phone})`:''].filter(Boolean).join(' ');
@@ -154,11 +166,20 @@
     }
     function renderDates(listing){
       $dates.innerHTML='';$select.innerHTML='';$select.appendChild(option('Choose a date…','',true));
-      GAMES.forEach(g=>{
-        const entry=listing[g.id]||null;
-        const full=entrySlots(entry).length>=CAPACITY;
-        $dates.appendChild(dateRow(g,entry));
-        $select.appendChild(option(g.label+(full?' (full)':''),g.id,full));
+      const sections=[['home','Home dinners'],['away','Away snacks']];
+      sections.forEach(([kind,title])=>{
+        const games=GAMES.filter(g=>g.kind===kind);
+        if(!games.length) return;
+        const h=document.createElement('div');
+        h.style.cssText='margin:14px 10px 4px;font-size:13px;font-weight:700;color:#cfd5dc;letter-spacing:.02em';
+        h.textContent=title;
+        $dates.appendChild(h);
+        games.forEach(g=>{
+          const entry=listing[g.id]||null;
+          const full=entrySlots(entry).length>=CAPACITY;
+          $dates.appendChild(dateRow(g,entry));
+          $select.appendChild(option(g.label+(full?' (full)':''),g.id,full));
+        });
       });
     }
     function renderRoster(listing){

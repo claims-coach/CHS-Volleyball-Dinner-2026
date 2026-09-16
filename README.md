@@ -41,7 +41,7 @@ Single-page volunteer sign-up for home game dinners. Static frontend (Vercel) + 
 
 ---
 
-## 2026-27 Home Game Dates
+## 2026-27 Dates (Home dinners + Away snacks)
 
 | Date | Opponent |
 |------|----------|
@@ -90,7 +90,7 @@ Each entry needs:
 
 ## Features
 
-- **Single-slot lock**: One volunteer per date (enforced server-side)
+- **Two slots per date**: Up to 2 volunteers for each home dinner or away snack date (enforced server-side)
 - **Confirmation emails**: Sent to volunteer, coach, and organizer
 - **Real-time roster**: Shows current signups
 - **Drinks reminder**: Water/sports drinks only — no energy drinks or caffeine
