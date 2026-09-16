@@ -55,17 +55,15 @@
       <div class="crest"><img src="./assets/chs-logo.jpeg" alt="Cascade Bruins logo"></div>
       <h1>Cascade Bruins Volleyball — Dinner Sign-Up</h1>
     </div>
-    <p class="sub">2026-27 Season • One volunteer per date to bring dinner/snacks for about 15 people.</p>
+    <p class="sub">2026-27 Season • One volunteer per date brings dinner/snacks <b>for about 15 people</b>.</p>
   </header>
 
-  <!-- Info banners -->
-  <div class="banner">
-    <div><strong>Food quantity:</strong> Please bring enough dinner/snacks for <strong>about 15 people</strong> (players + coaches).</div>
-  </div>
+  <!-- Drinks reminder -->
   <div class="banner">
     <div><strong>Note on drinks:</strong> Drinks are <em>not required</em>. If you do bring them,
       please stick to <strong>water or sports drinks</strong> — <strong>no energy drinks or caffeinated beverages</strong>.</div>
   </div>
+  <div class="banner"><div><strong>Food quantity:</strong> Please bring enough dinner/snacks <b>for about 15 people</b>.</div></div>
 
   <main>
     <section class="card">
@@ -124,31 +122,55 @@
           $rosterBody=document.querySelector('#roster tbody'), $rosterEmpty=document.getElementById('rosterEmpty');
 
     function option(label,value,disabled=false){const o=document.createElement('option');o.textContent=label;o.value=value;o.disabled=disabled;return o;}
-    function dateRow(game,taken){
-      const row=document.createElement('div');row.className='date'+(taken?' taken':'');
+    const CAPACITY = 2;
+    function entrySlots(entry){
+      if(!entry) return [];
+      if(Array.isArray(entry.slots)) return entry.slots;
+      if(entry.name) return [{name:entry.name,email:entry.email,phone:entry.phone,notes:entry.notes}];
+      return [];
+    }
+    function dateRow(game,entry){
+      const slots=entrySlots(entry);
+      const filled=slots.length;
+      const full=filled>=CAPACITY;
+      const open=Math.max(0,CAPACITY-filled);
+      const row=document.createElement('div');row.className='date'+(full?' taken':'');
       const left=document.createElement('div');left.className='meta';
       const when=document.createElement('div');when.className='when';when.textContent=game.label;
       const who=document.createElement('div');who.className='who help';
-      if(taken){const contact=[taken.email||'',taken.phone?`(${taken.phone})`:''].filter(Boolean).join(' ');
-        who.innerHTML=`Reserved by <strong>${taken.name}</strong> — ${contact}`;}
-      else{who.textContent='Open — 1 slot';}
+      if(!filled){who.textContent='Open — '+CAPACITY+' slots';}
+      else{
+        const lines=slots.map(s=>{
+          const contact=[s.email||'',s.phone?`(${s.phone})`:''].filter(Boolean).join(' ');
+          return `<div>Reserved by <strong>${s.name||''}</strong>${contact?(' — '+contact):''}</div>`;
+        }).join('');
+        who.innerHTML=lines+(full?'':'<div>Open — '+open+' slot'+(open===1?'':'s')+' left</div>');
+      }
       const right=document.createElement('div');
-      const btn=document.createElement('button');btn.className='btn';btn.textContent=taken?'Full':'Sign Up';btn.disabled=!!taken;
+      const btn=document.createElement('button');btn.className='btn';btn.textContent=full?'Full':'Sign Up';btn.disabled=full;
       btn.onclick=()=>{$select.value=game.id;document.getElementById('name').focus();window.scrollTo({top:0,behavior:'smooth'});};
       left.appendChild(when);left.appendChild(who);right.appendChild(btn);
       row.appendChild(left);row.appendChild(right);return row;
     }
     function renderDates(listing){
       $dates.innerHTML='';$select.innerHTML='';$select.appendChild(option('Choose a date…','',true));
-      GAMES.forEach(g=>{const taken=listing[g.id]||null;$dates.appendChild(dateRow(g,taken));$select.appendChild(option(g.label,g.id,!!taken));});
+      GAMES.forEach(g=>{
+        const entry=listing[g.id]||null;
+        const full=entrySlots(entry).length>=CAPACITY;
+        $dates.appendChild(dateRow(g,entry));
+        $select.appendChild(option(g.label+(full?' (full)':''),g.id,full));
+      });
     }
     function renderRoster(listing){
-      const taken=Object.entries(listing).filter(([id])=>LABELS[id])
-        .map(([id,v])=>({id,label:LABELS[id],...v})).sort((a,b)=>a.id.localeCompare(b.id));
+      const rows=[];
+      Object.entries(listing).filter(([id])=>LABELS[id]).forEach(([id,v])=>{
+        entrySlots(v).forEach(s=>rows.push({id,label:LABELS[id],...s}));
+      });
+      rows.sort((a,b)=>a.id.localeCompare(b.id)||String(a.name||'').localeCompare(String(b.name||'')));
       $rosterBody.innerHTML='';
-      if(!taken.length){$rosterEmpty.style.display='block';return;} $rosterEmpty.style.display='none';
-      taken.forEach(r=>{const contact=[r.email||'',r.phone?`(${r.phone})`:''].filter(Boolean).join(' ');
-        const tr=document.createElement('tr');tr.innerHTML=`<td>${r.label}</td><td>${r.name}</td><td>${contact}</td>`;$rosterBody.appendChild(tr);});
+      if(!rows.length){$rosterEmpty.style.display='block';return;} $rosterEmpty.style.display='none';
+      rows.forEach(r=>{const contact=[r.email||'',r.phone?`(${r.phone})`:''].filter(Boolean).join(' ');
+        const tr=document.createElement('tr');tr.innerHTML=`<td>${r.label}</td><td>${r.name||''}</td><td>${contact}</td>`;$rosterBody.appendChild(tr);});
     }
 
     async function fetchListing(){
@@ -172,7 +194,18 @@
     }
 
     (async function(){
-      try{const listing=await fetchListing();renderDates(listing);renderRoster(listing);}catch(e){renderDates({});renderRoster({});}
+      // Always paint dates first so the board never looks empty while/if list API fails.
+      renderDates({});
+      try{
+        const listing=await fetchListing();
+        if(!listing || typeof listing!=='object' || Array.isArray(listing)) throw new Error('Bad list payload');
+        renderDates(listing);renderRoster(listing);
+      }catch(e){
+        console.error('listing failed', e);
+        renderDates({});renderRoster({});
+        $msg.textContent='Could not refresh signups (dates still shown). Pull to refresh.';
+        $msg.className='help err';
+      }
       $form.addEventListener('submit',async e=>{
         e.preventDefault();$msg.textContent='';
         const id=$select.value,name=document.getElementById('name').value.trim(),
@@ -180,7 +213,7 @@
               phone=document.getElementById('phone').value.trim(),
               notes=document.getElementById('notes').value.trim();
         if(!id||!name||!email){$msg.textContent='Fill all required fields';return;}
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$msg.textContent='Please enter a valid email address';$msg.className='help err';return;}
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){$msg.textContent='Please enter a valid email address';return;}
         const btn=$form.querySelector('button[type=submit]');btn.disabled=true;
         try{const res=await submitSignup({id,label:LABELS[id]||id,name,email,phone,notes});
           if(res&&res.ok){$msg.textContent='Saved! Confirmation email sent.';$msg.className='help ok';
