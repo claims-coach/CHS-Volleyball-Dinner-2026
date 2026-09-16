@@ -101,6 +101,8 @@ function sendConfirmations_(payload) {
   const phone = payload.phone || '';
   const notes = payload.notes || '';
 
+  if (!isValidEmail_(volunteerEmail)) throw new Error('No valid volunteer email');
+
   const subject = 'Cascade Bruins Volleyball: ' + name + ' confirmed for ' + label;
   const isAway = /AWAY|Snacks/i.test(label);
   const foodWord = isAway ? 'snacks' : 'dinner';
@@ -114,30 +116,26 @@ function sendConfirmations_(payload) {
     '<p><b>Food quantity:</b> Please bring enough ' + foodWord + ' for about 15 people.</p>' +
     '<p>Go Bruins!</p>';
 
-  const recipients = [];
-  if (isValidEmail_(volunteerEmail)) recipients.push(volunteerEmail);
-  if (isValidEmail_(COACH_EMAIL)) recipients.push(COACH_EMAIL);
-  ORGANIZER_EMAILS.forEach(function(addr){ if (isValidEmail_(addr)) recipients.push(addr); });
+  // One message: volunteer To, organizers + coach on Cc (never duplicate To on Cc).
+  const cc = [];
+  function pushCc(addr) {
+    const a = String(addr||'').trim().toLowerCase();
+    if (!isValidEmail_(a)) return;
+    if (a === volunteerEmail.toLowerCase()) return;
+    if (cc.indexOf(a) === -1) cc.push(a);
+  }
+  pushCc(COACH_EMAIL);
+  ORGANIZER_EMAILS.forEach(pushCc);
 
-  const unique = [];
-  recipients.forEach(function(addr){
-    const a = addr.toLowerCase();
-    if (unique.indexOf(a) === -1) unique.push(a);
-  });
-
-  if (!unique.length) throw new Error('No valid email recipients');
-
-  const errors = [];
-  unique.forEach(function(addr){
-    try {
-      MailApp.sendEmail({ to: addr, subject: subject, htmlBody: html });
-    } catch (err) {
-      errors.push(addr + ': ' + String(err));
-      console.error('Email error', addr, err);
-    }
-  });
-
-  return { sent: unique.length - errors.length, failed: errors };
+  try {
+    const opts = { to: volunteerEmail, subject: subject, htmlBody: html };
+    if (cc.length) opts.cc = cc.join(',');
+    MailApp.sendEmail(opts);
+    return { sent: 1, failed: [], to: volunteerEmail, cc: cc };
+  } catch (err) {
+    console.error('Email error', err);
+    return { sent: 0, failed: [String(err)], to: volunteerEmail, cc: cc };
+  }
 }
 
 function reserveSlot_(body) {
