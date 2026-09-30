@@ -2,7 +2,7 @@
  * Cascade Bruins Volleyball — Dinner Sign-Up Backend (Google Apps Script)
  * 2026-27 Season
  *
- * Stores signups in a Google Sheet; enforces SLOTS_PER_DATE per date (home dinner or away snacks);
+ * Stores signups in a Google Sheet; enforces SLOTS_PER_DATE per date (home dinner);
  * emails volunteer, coach, and organizers on confirmation.
  *
  * NOTE: Browser clients must use GET ?action=signup (POST to /exec 302→405).
